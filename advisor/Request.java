@@ -2,10 +2,11 @@ package advisor;
 
 public enum Request {
     Categories,
-    Exit,
     Featured,
     New,
-    Playlists;
+    Playlists,
+    Auth,
+    Exit;
 
     public boolean equals(String string) {
         return this.toString().equals(string);

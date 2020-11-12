@@ -1,5 +1,16 @@
 package advisor;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -12,12 +23,21 @@ public class Main {
 
     private static final String clientId = "ffe57dd7c06d4b2dac46c0ba8c7dd63d";
     private static final String redirectUrl = "http://localhost:8080";
+    private static HttpServer server;
+    private static String spotifyAccessServerUrl;
 
     Main() {
         isAuthenticated = false;
     }
 
     public static void main(String[] args) {
+        if (args.length > 0) {
+            spotifyAccessServerUrl = args[1];
+            if (spotifyAccessServerUrl == null) {
+                spotifyAccessServerUrl = "https://accounts.spotify.com";
+            }
+        }
+
         var in = new Scanner(System.in);
 
         while(true) {
@@ -32,6 +52,7 @@ public class Main {
 
             if (command.request == Request.Exit) {
                 System.out.println("---GOODBYE!---");
+                server.stop(1);
                 return;
             }
         }
@@ -58,14 +79,103 @@ public class Main {
                 print(getPlaylists(command.category).playlists);
                 break;
             case Auth:
+                System.out.println("use this link to request the access code:");
                 System.out.println(getAuthLink());
-                System.out.println("---SUCCESS---");
 
-                isAuthenticated = true;
-                System.out.println();
+                startHttpServer();
+
+                if (isAuthenticated) {
+                    server.stop(1);
+                    System.out.println("---SUCCESS---");
+                }
 
                 break;
         }
+    }
+
+    private static void startHttpServer() {
+        try {
+            server = HttpServer.create();
+            server.bind(new InetSocketAddress(8080), 0);
+
+            server.createContext("/",
+                    new HttpHandler() {
+                        public void handle(HttpExchange exchange) {
+                            String code = getCode(exchange.getRequestURI().getQuery());
+
+                            writeResponse(exchange, code.isEmpty()
+                                    ? "Authorization code not found. Try again."
+                                    : "Got the code. Return back to your program.");
+
+                            if (!code.isEmpty()) {
+
+                                System.out.println("code received");
+
+                                postRequest(code);
+
+                                /////////////////// move up ///////////////////
+                                isAuthenticated = true;
+                            }
+                        }
+                    }
+            );
+
+            server.start();
+
+            System.out.println("waiting for code...");
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
+    }
+
+    private static void postRequest(String code) {
+        System.out.println("making http request for access_token...");
+
+        HttpClient client = HttpClient.newBuilder()
+                                      .build();
+
+        HttpRequest request = HttpRequest.newBuilder()
+                                         .header("Content-Type", "application/x-www-form-urlencoded")
+                                         .uri(URI.create(spotifyAccessServerUrl + "/api/token"))
+                                         .POST(HttpRequest.BodyPublishers.ofString(String.format(
+                                                 "grant_type=authorization_code&" +
+                                                 "code=%s&" +
+                                                 "redirect_uri=%s&" +
+                                                 "client_id=%s&" +
+                                                 "client_secret=%s",
+                                                 code, redirectUrl, clientId, "XXXXXXXXXXXXXXXXXXXXXXX")))
+                //.timeout(Duration.ofSeconds(2))
+                .build();
+
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("response:");
+            System.out.println(response.body());
+        } catch (IOException | InterruptedException exception) {
+            exception.printStackTrace();
+        }
+    }
+
+    private static void writeResponse(HttpExchange exchange, String responseMessage) {
+        try {
+            exchange.sendResponseHeaders(200, responseMessage.length());
+            exchange.getResponseBody().write(responseMessage.getBytes());
+            exchange.getResponseBody().close();
+        } catch (IOException exception) {
+            System.out.println(exception.getMessage());
+        }
+    }
+
+    private static String getCode(String query) {
+        if (query == null) {
+            return "";
+        }
+
+        String codeParam = "code=";
+        int indexAfterCodeParam = query.indexOf(codeParam) + codeParam.length();
+
+        return query.substring(indexAfterCodeParam);
     }
 
     private static boolean isAuthenticated(Command command) {
@@ -75,7 +185,7 @@ public class Main {
     }
 
     private static String getAuthLink() {
-        return String.format("https://accounts.spotify.com/authorize" +
+        return String.format(spotifyAccessServerUrl + "/authorize" +
                              "?client_id=%s&redirect_uri=%s&response_type=code",
                              clientId,
                              redirectUrl);

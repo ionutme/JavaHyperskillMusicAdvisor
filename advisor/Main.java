@@ -10,7 +10,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -25,6 +24,8 @@ public class Main {
     private static final String redirectUrl = "http://localhost:8080";
     private static HttpServer server;
     private static String spotifyAccessServerUrl;
+
+    private static String code = "";
 
     Main() {
         isAuthenticated = false;
@@ -52,7 +53,6 @@ public class Main {
 
             if (command.request == Request.Exit) {
                 System.out.println("---GOODBYE!---");
-                server.stop(1);
                 return;
             }
         }
@@ -82,78 +82,78 @@ public class Main {
                 System.out.println("use this link to request the access code:");
                 System.out.println(getAuthLink());
 
-                startHttpServer();
+                authenticate();
 
                 if (isAuthenticated) {
-                    server.stop(1);
-                    System.out.println("---SUCCESS---");
+                    //
                 }
 
                 break;
         }
     }
 
-    private static void startHttpServer() {
-        try {
-            server = HttpServer.create();
-            server.bind(new InetSocketAddress(8080), 0);
+    private static void authenticate() {
+        while (!isAuthenticated) {
+            try {
+                server = HttpServer.create();
+                server.bind(new InetSocketAddress(8080), 0);
 
-            server.createContext("/",
-                    new HttpHandler() {
-                        public void handle(HttpExchange exchange) {
-                            String code = getCode(exchange.getRequestURI().getQuery());
+                server.createContext("/",
+                        new HttpHandler() {
+                            public void handle(HttpExchange exchange) {
+                                code = getCode(exchange.getRequestURI().getQuery());
 
-                            writeResponse(exchange, code.isEmpty()
-                                    ? "Authorization code not found. Try again."
-                                    : "Got the code. Return back to your program.");
+                                System.out.printf("Code received is:--|%s|--\n", code);
 
-                            if (!code.isEmpty()) {
+                                writeResponse(exchange, code.isEmpty()
+                                        ? "Authorization code not found. Try again."
+                                        : "Got the code. Return back to your program.");
 
-                                System.out.println("code received");
+                                if (!code.isEmpty()) {
+                                    System.out.println("code received on thread-" + Thread.currentThread().getId());
+                                    //server.stop(1);
 
-                                postRequest(code);
+                                    System.out.println("making http request for access_token...");
 
-                                /////////////////// move up ///////////////////
-                                isAuthenticated = true;
+                                    HttpRequest request = HttpRequest.newBuilder()
+                                            .header("Content-Type", "application/x-www-form-urlencoded")
+                                            .uri(URI.create(spotifyAccessServerUrl + "/api/token"))
+                                            .POST(HttpRequest.BodyPublishers.ofString(String.format(
+                                                    "grant_type=authorization_code&" +
+                                                            "code=%s&" +
+                                                            "redirect_uri=%s&" +
+                                                            "client_id=%s&" +
+                                                            "client_secret=%s",
+                                                    code, redirectUrl, clientId, "1883bd45d15543429c0dd3ac37857f13")))
+                                            .build();
+
+                                    try {
+                                        HttpClient client = HttpClient.newBuilder().build();
+                                        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                                        System.out.println("response:");
+                                        System.out.println(response.body());
+                                    } catch (IOException | InterruptedException exception) {
+                                        exception.printStackTrace();
+                                    }
+
+                                    /////////////////// move up ///////////////////
+                                    isAuthenticated = true;
+
+                                    System.out.println("---SUCCESS---");
+
+                                    server.stop(1);
+                                }
                             }
                         }
-                    }
-            );
+                );
 
-            server.start();
+                server.start();
 
-            System.out.println("waiting for code...");
-        } catch (IOException exception) {
-            exception.printStackTrace();
-        }
-    }
-
-    private static void postRequest(String code) {
-        System.out.println("making http request for access_token...");
-
-        HttpClient client = HttpClient.newBuilder()
-                                      .build();
-
-        HttpRequest request = HttpRequest.newBuilder()
-                                         .header("Content-Type", "application/x-www-form-urlencoded")
-                                         .uri(URI.create(spotifyAccessServerUrl + "/api/token"))
-                                         .POST(HttpRequest.BodyPublishers.ofString(String.format(
-                                                 "grant_type=authorization_code&" +
-                                                 "code=%s&" +
-                                                 "redirect_uri=%s&" +
-                                                 "client_id=%s&" +
-                                                 "client_secret=%s",
-                                                 code, redirectUrl, clientId, "XXXXXXXXXXXXXXXXXXXXXXX")))
-                //.timeout(Duration.ofSeconds(2))
-                .build();
-
-        try {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            System.out.println("response:");
-            System.out.println(response.body());
-        } catch (IOException | InterruptedException exception) {
-            exception.printStackTrace();
+                System.out.println("waiting for code... on thread-" + Thread.currentThread().getId());
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
         }
     }
 
@@ -168,11 +168,13 @@ public class Main {
     }
 
     private static String getCode(String query) {
-        if (query == null) {
+        String codeParam = "code=";
+        if (query == null || !query.contains(codeParam)) {
             return "";
         }
 
-        String codeParam = "code=";
+        System.out.println("QUERY IS:--|" + query + "|--");
+
         int indexAfterCodeParam = query.indexOf(codeParam) + codeParam.length();
 
         return query.substring(indexAfterCodeParam);

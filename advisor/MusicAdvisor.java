@@ -12,54 +12,42 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 import java.util.stream.Collectors;
 
 import static advisor.MusicRepository.*;
+import static advisor.MusicRepository.getPlaylists;
 
-public class Main {
+public class MusicAdvisor {
     private static boolean isAuthenticated;
 
     private static final String clientId = "ffe57dd7c06d4b2dac46c0ba8c7dd63d";
     private static final String redirectUrl = "http://localhost:8080";
     private static HttpServer server;
-    private static String spotifyAccessServerUrl;
+    private static String accessServerUrl;
 
     private static String code = "";
 
-    Main() {
+    MusicAdvisor(String accessServerUrl) {
+        this.accessServerUrl = accessServerUrl;
         isAuthenticated = false;
     }
 
-    public static void main(String[] args) {
-        if (args.length > 0) {
-            spotifyAccessServerUrl = args[1];
-            if (spotifyAccessServerUrl == null) {
-                spotifyAccessServerUrl = "https://accounts.spotify.com";
-            }
+    public boolean request(String input) {
+        Command command = getCommand(input);
+
+        if (!isAuthenticated(command)) {
+            System.out.println("Please, provide access for application.");
+            return false;
         }
 
-        var in = new Scanner(System.in);
+        executeCommand(command);
 
-        var ma = new MusicAdvisor(spotifyAccessServerUrl);
-        while(true) {
-
-            ma.request(in.nextLine());
-
-            /*Command command = getCommand(in.nextLine());
-
-            if (!isAuthenticated(command)) {
-                System.out.println("Please, provide access for application.");
-                continue;
-            }
-
-            executeCommand(command);
-
-            if (command.request == Request.Exit) {
-                System.out.println("---GOODBYE!---");
-                return;
-            }*/
+        if (command.request == Request.Exit) {
+            System.out.println("---GOODBYE!---");
+            return true;
         }
+
+        return false;
     }
 
     private static void executeCommand(Command command) {
@@ -118,7 +106,7 @@ public class Main {
 
                                 HttpRequest request = HttpRequest.newBuilder()
                                         .header("Content-Type", "application/x-www-form-urlencoded")
-                                        .uri(URI.create(spotifyAccessServerUrl + "/api/token"))
+                                        .uri(URI.create(accessServerUrl + "/api/token"))
                                         .POST(HttpRequest.BodyPublishers.ofString(String.format(
                                                 "grant_type=authorization_code&" +
                                                         "code=%s&" +
@@ -181,21 +169,21 @@ public class Main {
 
     private static boolean isAuthenticated(Command command) {
         return isAuthenticated ||
-               command.request == Request.Auth ||
-               command.request == Request.Exit;
+                command.request == Request.Auth ||
+                command.request == Request.Exit;
     }
 
     private static String getAuthLink() {
-        return String.format(spotifyAccessServerUrl + "/authorize" +
-                             "?client_id=%s&redirect_uri=%s&response_type=code",
-                             clientId,
-                             redirectUrl);
+        return String.format(accessServerUrl + "/authorize" +
+                        "?client_id=%s&redirect_uri=%s&response_type=code",
+                clientId,
+                redirectUrl);
     }
 
     static Command getCommand(String userInput) {
         List<String> words = Arrays.stream(userInput.split("\\s+"))
-                                     .map(w -> Character.toUpperCase(w.charAt(0)) + w.substring(1))
-                                     .collect(Collectors.toList());
+                .map(w -> Character.toUpperCase(w.charAt(0)) + w.substring(1))
+                .collect(Collectors.toList());
 
         String userRequest = words.get(0);
         Request request = Request.valueOf(userRequest);

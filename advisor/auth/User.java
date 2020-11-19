@@ -5,6 +5,7 @@ public class User {
     final String CLIENT_SECRET;
 
     private boolean isAuthenticated;
+    public String input;
 
     {
         CLIENT_ID = SpotifyConfiguration.SPOTIFY_CLIENT_ID;

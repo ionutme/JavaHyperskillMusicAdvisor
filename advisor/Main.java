@@ -1,5 +1,6 @@
 package advisor;
 
+import advisor.auth.User;
 import advisor.controller.CommandCenter;
 
 import java.util.Scanner;
@@ -8,11 +9,13 @@ public class Main {
     public static void main(String[] args) {
         var in = new Scanner(System.in);
 
+        var user = new User();
+
         boolean keepAsking = true;
         while(keepAsking) {
-            String userInput = in.nextLine();
+            user.input = in.nextLine();
 
-            keepAsking = CommandCenter.execute(userInput, tryGetAccessParam(args));
+            keepAsking = CommandCenter.dispatch(user, tryGetAccessParam(args));
         }
     }
 

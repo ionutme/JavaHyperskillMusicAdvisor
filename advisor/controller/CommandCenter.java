@@ -10,10 +10,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CommandCenter {
-    public static boolean execute(String userInput, String accessParam) {
-        var user = new User();
+    public static boolean dispatch(User user, String accessParam) {
 
-        switch (getUserCommand(userInput)) {
+        switch (getUserCommand(user.input)) {
             case "AUTH":
                 AuthenticationService.authenticate(user, accessParam);
                 break;
@@ -27,7 +26,7 @@ public class CommandCenter {
                 }
 
                 var musicAdvisor = new MusicAdvisor(System.out::println);
-                musicAdvisor.requestAdvice(getMusicRequest(userInput));
+                musicAdvisor.requestAdvice(getMusicRequest(user.input));
                 break;
         }
 

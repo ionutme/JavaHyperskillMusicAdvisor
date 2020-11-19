@@ -2,14 +2,14 @@ package advisor;
 
 public class Command {
     Category category;
-    final Request request;
+    final MusicRequest musicRequest;
 
-    Command(Request request) {
-        this.request = request;
+    Command(MusicRequest musicRequest) {
+        this.musicRequest = musicRequest;
     }
 
-    Command(Request request, Category category) {
-        this.request = request;
+    Command(MusicRequest musicRequest, Category category) {
+        this.musicRequest = musicRequest;
         this.category = category;
     }
 }

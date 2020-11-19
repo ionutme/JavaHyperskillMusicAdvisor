@@ -1,6 +1,6 @@
 package advisor;
 
-public enum Request {
+public enum MusicRequest {
     Categories,
     Featured,
     New,

@@ -1,4 +1,4 @@
-package advisor;
+package advisor.auth;
 
 public class AuthenticationService {
     private static final String REDIRECT_URL;
@@ -9,14 +9,14 @@ public class AuthenticationService {
         DEFAULT_ACCESS_SERVER_URL = SpotifyConfiguration.SPOTIFY_ACCESS_SERVER_URL;
     }
 
-    static void authenticate(User user, String userChosenAccessServerUrl) {
+    public static void authenticate(User user, String userChosenAccessServerUrl) {
         String accessServerUrl = getAccessServerUrl(userChosenAccessServerUrl);
 
         System.out.println("use this link to request the access code:");
         System.out.println(getAuthLink(user.CLIENT_ID, accessServerUrl));
 
-        var handler = new SpotifyAuthenticatorHandler(user, accessServerUrl);
-        try (var server = new LocalHttpServer(handler)) {
+        //var handler = new SpotifyAuthenticatorHandler(user, accessServerUrl);
+        try (var server = new LocalHttpServer(new AuthenticatorHandler(user, accessServerUrl))) {
             waitAuthentication(user);
         }
     }
@@ -24,7 +24,7 @@ public class AuthenticationService {
     private static void waitAuthentication(User user) {
         System.out.println("waiting for code...");
 
-        while (!user.isAuthenticated) {
+        while (!user.isAuthenticated()) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException ignored) {

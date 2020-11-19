@@ -1,4 +1,4 @@
-package advisor;
+package advisor.auth;
 
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -7,12 +7,17 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 public class LocalHttpServer implements AutoCloseable {
+    private final int port;
     private final HttpServer server;
+
+    {
+        port = LocalHttpServerConfiguration.LOCAL_HTTP_SERVER_PORT;
+    }
 
     LocalHttpServer(HttpHandler handler) {
         try {
             server = HttpServer.create();
-            server.bind(new InetSocketAddress(8080), 0);
+            server.bind(new InetSocketAddress(port), 0);
             server.createContext("/", handler);
             server.start();
         } catch (IOException exception) {
@@ -22,7 +27,7 @@ public class LocalHttpServer implements AutoCloseable {
     }
 
     void stop() {
-        this.server.stop(1);
+        server.stop(1);
     }
 
     @Override

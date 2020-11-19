@@ -1,10 +1,10 @@
-package advisor;
+package advisor.model;
 
 public class Album {
     final String name;
     final String[] artists;
 
-    Album(String name, String... artists) {
+    public Album(String name, String... artists) {
         this.name = name;
         this.artists = artists;
     }

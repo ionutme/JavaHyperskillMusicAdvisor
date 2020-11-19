@@ -1,4 +1,4 @@
-package advisor;
+package advisor.auth;
 
 class SpotifyConfiguration {
     public static final String SPOTIFY_ACCESS_SERVER_URL = "https://accounts.spotify.com";

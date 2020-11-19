@@ -1,8 +1,13 @@
-package advisor;
+package advisor.data;
 
-class MusicRepository {
+import advisor.model.Album;
+import advisor.model.Category;
+import advisor.model.CategoryPlaylists;
+import advisor.model.Playlist;
 
-    static Album[] getNewReleases() {
+public class MusicRepository {
+
+    public static Album[] getNewReleases() {
         return new Album[] {
                 new Album("Mountains", "Sia", "Diplo", "Labrinth"),
                 new Album("Runaway", "Lil Peep"),
@@ -11,7 +16,7 @@ class MusicRepository {
         };
     }
 
-    static Playlist[] getFeatured() {
+    public static Playlist[] getFeatured() {
         return new Playlist[] {
                 new Playlist("Mellow Morning"),
                 new Playlist("Wake Up and Smell the Coffee"),
@@ -20,7 +25,7 @@ class MusicRepository {
         };
     }
 
-    static CategoryPlaylists getPlaylists(Category category) {
+    public static CategoryPlaylists getPlaylists(Category category) {
         switch (category) {
             case Mood:
                 return new CategoryPlaylists(category, new Playlist[] {
@@ -34,7 +39,7 @@ class MusicRepository {
         }
     }
 
-    static Category[] getCategories() {
+    public static Category[] getCategories() {
         return Category.values();
     }
 }

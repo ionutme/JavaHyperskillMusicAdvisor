@@ -1,4 +1,7 @@
-package advisor;
+package advisor.controller;
+
+import advisor.model.Category;
+import advisor.model.MusicRequest;
 
 public class Command {
     Category category;
@@ -9,7 +12,7 @@ public class Command {
     }
 
     Command(MusicRequest musicRequest, Category category) {
-        this.musicRequest = musicRequest;
+        this(musicRequest);
         this.category = category;
     }
 }

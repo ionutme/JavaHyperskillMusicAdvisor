@@ -1,10 +1,10 @@
-package advisor;
+package advisor.model;
 
 public class CategoryPlaylists {
     final Category category;
-    final Playlist[] playlists;
+    public final Playlist[] playlists;
 
-    CategoryPlaylists(Category category, Playlist[] playlists) {
+    public CategoryPlaylists(Category category, Playlist[] playlists) {
         this.category = category;
         this.playlists = playlists;
     }

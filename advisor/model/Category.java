@@ -1,4 +1,4 @@
-package advisor;
+package advisor.model;
 
 public enum Category {
     TopLists,

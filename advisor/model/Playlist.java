@@ -1,9 +1,9 @@
-package advisor;
+package advisor.model;
 
 public class Playlist {
     final String name;
 
-    Playlist(String name) {
+    public Playlist(String name) {
         this.name = name;
 
     }

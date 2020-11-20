@@ -9,13 +9,17 @@ public class Main {
     public static void main(String[] args) {
         var in = new Scanner(System.in);
 
+        offerAdvice(in, tryGetAccessParam(args));
+    }
+
+    private static void offerAdvice(Scanner in, String access) {
         var user = new User();
 
         boolean keepAsking = true;
         while(keepAsking) {
             user.input = in.nextLine();
 
-            keepAsking = CommandCenter.dispatch(user, tryGetAccessParam(args));
+            keepAsking = CommandCenter.dispatch(user, access);
         }
     }
 

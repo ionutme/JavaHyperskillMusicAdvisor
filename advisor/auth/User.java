@@ -5,6 +5,7 @@ public class User {
     final String CLIENT_SECRET;
 
     private boolean isAuthenticated;
+    public String accessToken = null;
     public String input;
 
     {
@@ -18,7 +19,8 @@ public class User {
         return this.isAuthenticated;
     }
 
-    public void markAsAuthenticated() {
+    public void markAsAuthenticated(String accessToken) {
         this.isAuthenticated = true;
+        this.accessToken = accessToken;
     }
 }

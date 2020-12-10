@@ -1,11 +1,17 @@
 package advisor.controller;
 
+import advisor.SpotifyService;
 import advisor.data.MusicRepository;
 import advisor.model.Album;
 import advisor.model.Category;
 import advisor.model.MusicRequest;
 import advisor.model.Playlist;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.function.Consumer;
 
 public class MusicAdvisor {
@@ -16,7 +22,8 @@ public class MusicAdvisor {
         this.writeFunc = writeFunc;
     }
 
-    public void requestAdvice(MusicRequest musicRequest) {
+    public void requestAdvice(
+            MusicRequest musicRequest, String accessToken, String apiServerPath) {
         switch (musicRequest) {
             case New:
                 writeHeader("NEW RELEASES");
@@ -28,7 +35,18 @@ public class MusicAdvisor {
                 break;
             case Categories:
                 writeHeader("CATEGORIES");
-                write(getCategories());
+
+                //write(getCategories());
+
+                HttpRequest httpRequest = HttpRequest.newBuilder()
+                        .header("Authorization", "Bearer " + accessToken)
+                        .uri(URI.create(apiServerPath + "/v1/browse/categories"))
+                        .GET()
+                        .build();
+
+                System.out.println("HTTP REQUEST:");
+                System.out.println(SpotifyService.send(httpRequest));
+
                 break;
             case Playlists:
                 Category category = musicRequest.getCategory();

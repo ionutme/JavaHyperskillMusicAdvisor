@@ -1,20 +1,27 @@
 package advisor.controller;
 
+import advisor.ServerPoints;
 import advisor.auth.AuthenticationService;
 import advisor.auth.User;
 import advisor.model.Category;
 import advisor.model.MusicRequest;
 
+import java.io.IOException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class CommandCenter {
-    public static boolean dispatch(User user, String accessParam) {
+    private static final MusicAdvisor musicAdvisor = new MusicAdvisor(System.out::println);
+
+    public static boolean dispatch(User user, ServerPoints serverPoints) {
 
         switch (getUserCommand(user.input)) {
             case "AUTH":
-                AuthenticationService.authenticate(user, accessParam);
+                AuthenticationService.authenticate(user, serverPoints.access);
                 break;
             case "EXIT":
                 System.out.println("---GOODBYE!---");
@@ -25,8 +32,7 @@ public class CommandCenter {
                     break;
                 }
 
-                var musicAdvisor = new MusicAdvisor(System.out::println);
-                musicAdvisor.requestAdvice(getMusicRequest(user.input));
+                musicAdvisor.requestAdvice(getMusicRequest(user.input), user.accessToken, serverPoints.resource);
                 break;
         }
 

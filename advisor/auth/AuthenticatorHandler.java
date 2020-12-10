@@ -1,5 +1,8 @@
 package advisor.auth;
 
+import advisor.SpotifyService;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -29,29 +32,19 @@ public class AuthenticatorHandler implements HttpHandler {
         if (!code.isEmpty()) {
             System.out.println("making http request for access_token...");
 
-            String response = send(buildRequest(code));
+            String response = SpotifyService.send(buildRequest(code));
 
             System.out.println("response:");
             System.out.println(response);
 
+            Gson gson = new Gson();
+            AuthenticationResponse authenticationResponse = gson.fromJson(response, AuthenticationResponse.class);
+
+            this.user.markAsAuthenticated(authenticationResponse.accessToken);
+            System.out.println("Access Token: " + authenticationResponse.accessToken);
+
             System.out.println("---SUCCESS---");
-
-            this.user.markAsAuthenticated();
         }
-    }
-
-    private static String send(HttpRequest request) {
-        HttpClient client = HttpClient.newBuilder().build();
-
-        HttpResponse<String> response;
-        try {
-            response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException | InterruptedException exception) {
-            throw new RuntimeException("Cannot send request! " +
-                                       "Error message: " + exception.getMessage());
-        }
-
-        return response.body();
     }
 
     private HttpRequest buildRequest(String code) {
@@ -88,8 +81,6 @@ public class AuthenticatorHandler implements HttpHandler {
         if (query == null || !query.contains(codeParam)) {
             return "";
         }
-
-        System.out.println("QUERY IS:--|" + query + "|--");
 
         int indexAfterCodeParam = query.indexOf(codeParam) + codeParam.length();
 

@@ -1,5 +1,6 @@
 package advisor;
 
+import advisor.auth.SpotifyConfiguration;
 import advisor.auth.User;
 import advisor.controller.CommandCenter;
 
@@ -9,21 +10,17 @@ public class Main {
     public static void main(String[] args) {
         var in = new Scanner(System.in);
 
-        offerAdvice(in, tryGetAccessParam(args));
+        offerAdvice(in, new ServerPoints(args));
     }
 
-    private static void offerAdvice(Scanner in, String access) {
+    private static void offerAdvice(Scanner in, ServerPoints serverPoints) {
         var user = new User();
 
         boolean keepAsking = true;
         while(keepAsking) {
             user.input = in.nextLine();
 
-            keepAsking = CommandCenter.dispatch(user, access);
+            keepAsking = CommandCenter.dispatch(user, serverPoints);
         }
-    }
-
-    private static String tryGetAccessParam(String[] args) {
-        return args.length > 0 ? args[1] : null;
     }
 }
